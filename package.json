@@ -1,0 +1,17 @@
+{
+    "name": "apex-whatsapp-notification-bot",
+    "version": "1.0.0",
+    "description": "Dedicated 24/7 WhatsApp Notification Bot for Apex Prime",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "@whiskeysockets/baileys": "latest",
+        "pino": "^9.6.0",
+        "qrcode": "^1.5.4"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
