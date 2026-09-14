@@ -34,6 +34,7 @@ let pendingPairingPhone = null;
 let pendingPairingResolve = null;
 let pendingPairingReject = null;
 const activityLogs = [];
+const recentNotificationCache = new Map();
 
 function logActivity(msg) {
     const time = new Date().toLocaleTimeString('en-GB');
@@ -274,8 +275,29 @@ function createWebServer() {
 
             try {
                 const jid = formatWhatsAppJid(rawPhone);
-                const sendRes = await currentSocket.sendMessage(jid, { text: String(message).trim() });
                 const cleanNum = jid.replace(/@.+/, '');
+                const cleanText = String(message).trim();
+
+                // Deduplication Guard: Suppress identical messages sent to the same phone within 30 seconds
+                const cacheKey = `${cleanNum}_${cleanText}`;
+                const now = Date.now();
+                if (recentNotificationCache.has(cacheKey) && (now - recentNotificationCache.get(cacheKey) < 30000)) {
+                    logActivity(`Deduplicated: skipped identical notification to +${cleanNum} (sent within 30s)`);
+                    return sendJson(200, {
+                        success: true,
+                        deduplicated: true,
+                        provider: 'baileys_notification_bot',
+                        message: 'Duplicate notification suppressed'
+                    });
+                }
+                recentNotificationCache.set(cacheKey, now);
+                if (recentNotificationCache.size > 200) {
+                    for (const [k, ts] of recentNotificationCache.entries()) {
+                        if (now - ts > 60000) recentNotificationCache.delete(k);
+                    }
+                }
+
+                const sendRes = await currentSocket.sendMessage(jid, { text: cleanText });
                 logActivity(`Sent message to +${cleanNum} (Msg ID: ${sendRes?.key?.id || 'OK'})`);
                 return sendJson(200, {
                     success: true,
