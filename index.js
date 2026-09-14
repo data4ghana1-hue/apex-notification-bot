@@ -103,7 +103,7 @@ async function startBot() {
         auth: state,
         logger: pino({ level: 'silent' }),
         printQRInTerminal: true,
-        browser: Browsers ? Browsers.macOS('Desktop') : ['Ubuntu', 'Chrome', '124.0.0.0'],
+        browser: Browsers ? Browsers.macOS('Chrome') : ['Mac OS', 'Chrome', '14.4.1'],
         syncFullHistory: false,
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
@@ -171,9 +171,10 @@ async function startBot() {
 
             const isRestartRequired = (statusCode === DisconnectReason.restartRequired || statusCode === 515);
             const isActualLogout = isRegistered && (statusCode === DisconnectReason.loggedOut) && !isRestartRequired;
+            const isBadSession = (statusCode === 403 || statusCode === 401);
 
-            if (isActualLogout) {
-                logActivity('Device logged out. Resetting session...');
+            if (isActualLogout || isBadSession) {
+                logActivity(`Session reset required (code: ${statusCode}). Resetting auth directory...`);
                 try { fs.rmSync(AUTH_DIR, { recursive: true, force: true }); } catch (e) {}
                 connectedPhone = null;
                 currentQrDataUrl = null;
