@@ -243,6 +243,12 @@ function createWebServer() {
             });
         };
 
+        // ── Health Check & HEAD Handler (for UptimeRobot / Monitoring) ──
+        if (method === 'HEAD' || pathname === '/health') {
+            res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+            return res.end(method === 'HEAD' ? null : 'OK');
+        }
+
         // ── API: Health & Status ──
         if (pathname === '/api/status' && method === 'GET') {
             return sendJson(200, {
